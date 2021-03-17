@@ -1,6 +1,10 @@
 class Shape:
 	default_mass=1
 	default_thita=0
+	class equation:
+		def init(self,coefficients,value):
+			self.coefficients=coefficients
+			self.value=value
 	def init(self,points=[[0]],masses=[default_mass,default_mass],Thita=default_thita):
 		dimension_error=0
 		if(not type(points)==list):
@@ -48,6 +52,7 @@ class Shape:
 			raise "Mass of a point cannot be zero."
 		else:
 			self.points=points#Coordinates of each point
+			self.hit_points=points#Coordinates for hitbox
 			self.masses=masses#Mass of each point
 			self.Thita=Thita#Initial angle of rotation of shape
 			self.COM=[0 for i in points[0]]
@@ -58,3 +63,61 @@ class Shape:
 				self.net_mass+=masses[i]#Adds mass of each point
 			for i in range(len(COM)):
 				self.COM[i]/=self.net_mass#Weighted average of coordinates
+	def hitbox_approximate(self):
+		def remove_repeats(points):
+			i=0
+			while(i<len(points)):
+				j=i+1
+				while(j<len(points)):
+					if(points[i]==points[j]):
+						if(j<len(points)-1):
+							points=points[:j]+points[j+1:]
+						else:
+							points=points[:j]
+					j+=1
+				i+=1
+			return points
+		def remove_collinear(points):
+			i=0
+			while(i<len(points)):
+				j=i+1
+				while(j<len(points)):
+					k=j+1
+					while(k<len(points)):
+						vect0=[points[k][l]-points[i][l] for l in range(len(points[0]))]
+						vect1=[points[j][l]-points[i][l] for l in range(len(points[0]))]
+						collinear=True
+						for l in range(1,len(vect0)):
+							if(not vect0[0]/vect1[1]==vect0[l]/vect1[l]):
+								collinear=False
+								break
+						if(collinear):
+							dispij=abs(points[i][0]-points[j][0])
+							dispjk=abs(points[j][0]-points[k][0])
+							dispki=abs(points[k][0]-points[i][0])
+							if(dispij>dispjk and dispij>dispki):
+								points.remove(points[k])
+								k-=1
+							elif(dispjk>dispjk and dispij>dispki):
+								points.remove(points[i])
+								j=i+1
+								k=j
+							else:
+								points.remove(points[j])
+								k=j
+						k+=1
+					j+=1
+				i+=1
+			return points
+		def find_coefficients(equations):
+			if(len(equations)==1):
+				return [equations[0].value/equations[0].coefficients[0]]
+			else:
+				coefficients=[[equations[i].coefficients[j]-equations[0].coefficients[j]*equations[i].coefficients[0]/coefficients[0].equations[0] for j in range(1,len(equations[0].coefficients))] for i in range(1,len(equations))]
+				value=[equations[i].value-equations[0].value*equations[i].coefficients[0]/equations[0].coefficients[0] for i in range(1,len(equations))]
+				coefficients=find_coefficients([equation(coefficients[i],value[i]) for i in range(len(equations)-1)])
+				a0=equations[0].value
+				for i in range(1,len(equations[0].coefficients)):
+					a0-=coefficients[i]*equations[0].coefficients[i]
+				a0/=equations[0].coefficients[0]
+				return a0+coefficients
