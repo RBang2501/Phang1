@@ -1,4 +1,11 @@
 import math
+
+def dist(A,B):
+	mag=0
+	for i in range(len(A)):
+		mag+=(A[i]-B[i])*(A[i]-B[i])
+	return math.sqrt(mag)
+
 class Shape:
 	
 	default_mass=1
@@ -23,7 +30,7 @@ class Shape:
 		for i in self.hit_points:
 			self.collision_radius=max(self.collision_radius,dist(i,COM))
 	
-	def init(self,points=[[0,0],[0,1],[1,0]],masses=[default_mass,default_mass,default_mass],Thita=[default_thita],velocity=[default_speedx,default_speedy],connections=[[1,2],[2,0],[0,1]]):
+	def init(self,points=[[0,0],[0,1],[1,0]],masses=[default_mass,default_mass,default_mass],Thita=[default_thita],velocity=[default_speedx,default_speedy],connections=[[1,2],[2,0],[0,1]],hitbox_accuracy):
 		dimension_error=0
 		if(not type(points)==list):
 			dimension_error=1
@@ -118,6 +125,7 @@ class Shape:
 			set_collision_radius()#Collision radius is the minimum distance a point must be in order to collide with the body
 			self.velocity=velocity
 			self.connections=connections
+			self.hitbox_accuracy=hitbox_accuracy
 	
 	def hitbox_approximate(self):
 		
@@ -193,5 +201,69 @@ class Shape:
 			den=math.sqrt(den)
 			return num/den
 		
+		def remove_hit_point(current_point,hit_points,connections):
+			hit_points.pop(current_point)
+			for i in connections[current_point]:
+				connections[i].remove(current_point)
+			connections.pop(current_point)
+			new_connections=[]
+			for i in connections:
+				lst=[]
+				for j in i:
+					lst.append(j if j<current_point else j-1)
+				new_connections.append(lst)
+			return (hit_points,new_connections)
+		
+		def is_looped(connections,reached_points,to_be_reached):
+			for i in reached_points:
+				for j in to_be_reached:
+					if j in connections[i]:
+						reached_points.append(j)
+						to_be_reached.remove(j)
+						if(len(to_be_reached)==0):
+							break
+					if(len(to_be_reached)==0):
+						break
+			return len(to_be_reached)==0
+		
+		def has_close_base(current_point,hit_points,connections,collision_radius,hitbox_accuracy):
+			current_connections=connections[current_point]
+			if(not is_looped(connections,current_connections[0],current_connections[1:])):
+				return False
+			if len(current_connections)>len(hit_points[0]):
+				base_lst=[hit_points[i] for i in current_connections[:len(hit_points[0])]]
+				max_deviation_from_base=0
+				min_deviation_from_base=0
+				normal=find_normal(base_lst,hit_points[current_point])
+				for i in current_connections[len(hit_points[0]):]:
+					deviation=find_normal(base_lst,hit_points[i])
+					if(deviation>max_deviation_from_base):
+						max_deviation_from_base=deviation
+					elif(deviation<min_deviation_from_base):
+						min_deviation_from_base=deviation
+				if((max_deviation-min_deviation)/collision_radius>1-hitbox_accuracy/100):
+					return False
+			else:
+				normal=find_normal([hit_points[i] for i in current_connections],points[current_point])
+			if(normal/collision_radius>1-hitbox_accuracy/100):
+				return False
+			centre=[0 for i in len(hit_points[0])]
+			max_dist_of_base_from_centre=0
+			for i in current_connections:
+				for j in range(len(hit_points[i])):
+					centre[j]+=hit_points[i][j]
+			for i in range(len(centre)):
+				centre[i]/=len(current_connections)
+			for i in current_connections:
+				current_dist=dist(hit_points[i],centre)
+				if(current_dist>max_dist_of_base_from_centre):
+					max_dist_of_base_from_centre=current_dist
+			if(dist(hit_points[current_point],centre)>max_dist_of_base_from_centre):
+				return False
+			return True
+		
 		self.hit_points=remove_repeats(self.hit_points)
 		self.hit_points=remove_collinear(self.hit_points)
+		for i in range(len(hit_points)):
+			if has_close_base(i,self.hit_points,self.connections,self.collision_radius,self.hit_box_accuracy)
+				self.hit_points,self.connections=remove_hit_point(i,self.hit_points,self.connections)
