@@ -23,7 +23,7 @@ class Shape:
 		for i in self.hit_points:
 			self.collision_radius=max(self.collision_radius,dist(i,COM))
 	
-	def init(self,points=[[0,0],[0,1],[1,0]],masses=[default_mass,default_mass,default_mass],Thita=[default_thita],velocity=[default_speedx,default_speedy],connections=[[1,2],[2,0],[0,1]],hitbox_accuracy):
+	def init(self,points=[[0,0],[0,1],[1,0]],masses=[default_mass,default_mass,default_mass],Thita=[default_thita],velocity=[default_speedx,default_speedy],connections=[[1,2],[2,0],[0,1]],hitbox_accuracy=100):
 		dimension_error=0
 		if(not type(points)==list):
 			dimension_error=1
@@ -119,6 +119,7 @@ class Shape:
 			self.velocity=velocity
 			self.connections=connections
 			self.hitbox_accuracy=hitbox_accuracy
+			hitbox_approximate()
 	
 	def hitbox_approximate(self):
 		
@@ -261,5 +262,5 @@ class Shape:
 		self.hit_points=remove_repeats(self.hit_points)
 		self.hit_points=remove_collinear(self.hit_points)
 		for i in range(len(hit_points)):
-			if has_close_base(i,self.hit_points,self.connections,self.collision_radius,self.hit_box_accuracy)#Approximates a small hill as flat plane
+			if has_close_base(i,self.hit_points,self.connections,self.collision_radius,self.hit_box_accuracy):#Approximates a small hill as flat plane
 				self.hit_points,self.connections=remove_hit_point(i,self.hit_points,self.connections)
