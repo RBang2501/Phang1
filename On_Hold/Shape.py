@@ -1,15 +1,11 @@
 import math
+import math2
 class Shape:
 	
 	default_mass=1
 	default_thita=0
 	default_speedx=0
 	default_speedy=0
-	
-	class equation:
-		def init(self,coefficients,value):
-			self.coefficients=coefficients
-			self.value=value
 	
 	def dist(point0,point1):#calculate distance between points
 		dist=0;
