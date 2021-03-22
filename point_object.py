@@ -2,6 +2,7 @@ import math_2
 
 
 class point_object:
+<<<<<<< HEAD
 
     default_mass = 1
     default_x = 0
@@ -34,3 +35,19 @@ class point_object:
         for i in range(len(acceleration)):
             self.velocity[i] += acceleration[i]*time_step
             self.position[i] += self.velocity[i]*time_step
+=======
+	
+	default_mass=1
+	default_x=0
+	default_y=0
+	default_speedx=0
+	default_speedy=0
+	default_charge=0
+	
+	def init(self,position=[default_x,default_y],velocity=[default_speedx,default_speedy],mass=default_mass,charge=default_charge):
+		
+		self.position=position
+		self.velocity=velocity
+		self.mass=mass
+		self.charge=charge
+>>>>>>> 842ab020788935980a92b2bcc974b62297094a90
